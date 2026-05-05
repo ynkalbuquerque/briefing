@@ -1226,29 +1226,54 @@ function buildBody() {
 
 async function sendEmail() {
   if(typeof emailjs==='undefined'){ console.warn('EmailJS não carregado'); return; }
-  const body       = buildBody();
-  const emailField = { lp:'email', copy:'cp_email', iv:'iv_email', sm:'sm_email' };
-  const nameField  = { lp:'nome',  copy:'cp_nome',  iv:'iv_nome',  sm:'sm_nome'  };
-  const labels     = { lp:'Landing Page', copy:'Copy', iv:'Identidade Visual', sm:'Social Media' };
+
+  emailjs.init({ publicKey: EJ_KEY });
+
+  const body        = buildBody();
+  const emailField  = { lp:'email', copy:'cp_email', iv:'iv_email', sm:'sm_email' };
+  const nameField   = { lp:'nome',  copy:'cp_nome',  iv:'iv_nome',  sm:'sm_nome'  };
+  const labels      = { lp:'Landing Page', copy:'Copy', iv:'Identidade Visual', sm:'Social Media' };
   const clientEmail = formData[emailField[curSvc]] || '';
   const clientName  = formData[nameField[curSvc]]  || 'Cliente';
   const svcLabel    = labels[curSvc];
 
-  await emailjs.send(EJ_SVC, EJ_TPL, {
-    to_email:  MY_EMAIL, to_name: 'Yanka Albuquerque',
-    from_name: clientName, from_email: clientEmail,
-    subject:   `📋 Novo Briefing: ${clientName} — ${svcLabel}`,
-    message:   body, reply_to: clientEmail,
-  });
+  console.log('Enviando para:', MY_EMAIL);
+  console.log('Service:', EJ_SVC, '| Template:', EJ_TPL, '| Key:', EJ_KEY);
+
+  try {
+    const r1 = await emailjs.send(EJ_SVC, EJ_TPL, {
+      to_email:   MY_EMAIL,
+      to_name:    'Yanka Albuquerque',
+      from_name:  clientName,
+      from_email: clientEmail,
+      name:       clientName,
+      email:      clientEmail,
+      subject:    `📋 Novo Briefing: ${clientName} — ${svcLabel}`,
+      message:    body,
+      reply_to:   clientEmail,
+    });
+    console.log('✅ E-mail para Yanka enviado:', r1.status, r1.text);
+  } catch(e) {
+    console.error('❌ Erro ao enviar para Yanka:', e);
+  }
 
   if (clientEmail) {
-    await emailjs.send(EJ_SVC, EJ_TPL, {
-      to_email:  clientEmail, to_name: clientName,
-      from_name: 'Yanka Albuquerque', from_email: MY_EMAIL,
-      subject:   `✅ Seu briefing foi recebido — Yanka Albuquerque Designer`,
-      message:   `Olá, ${clientName}!\n\nRecebi seu briefing de ${svcLabel} e em breve entro em contato.\n\nCópia do que você enviou:\n${body}\n\nObrigada por confiar no meu trabalho ✦\nYanka Albuquerque\nyanka.dsgn@gmail.com`,
-      reply_to:  MY_EMAIL,
-    });
+    try {
+      const r2 = await emailjs.send(EJ_SVC, EJ_TPL, {
+        to_email:   clientEmail,
+        to_name:    clientName,
+        from_name:  'Yanka Albuquerque',
+        from_email: MY_EMAIL,
+        name:       clientName,
+        email:      clientEmail,
+        subject:    `✅ Seu briefing foi recebido — Yanka Albuquerque Designer`,
+        message:    `Olá, ${clientName}!\n\nRecebi seu briefing de ${svcLabel} e em breve entro em contato.\n\nCópia do que você enviou:\n${body}\n\nObrigada por confiar no meu trabalho ✦\nYanka Albuquerque\nyanka.dsgn@gmail.com`,
+        reply_to:   MY_EMAIL,
+      });
+      console.log('✅ E-mail para cliente enviado:', r2.status, r2.text);
+    } catch(e) {
+      console.error('❌ Erro ao enviar para cliente:', e);
+    }
   }
 }
 
